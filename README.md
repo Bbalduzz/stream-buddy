@@ -8,12 +8,34 @@
 ```
 
 guarda o scarica contenuti da StreamingCommunity
+<table>
+  <tr>
+    <th align="left">Features</th>
+    <th align="left">Roadmap</th>
+  </tr>
+  <tr>
+    <td valign="top">
+      <ul>
+        <li>Cerca qualsiasi contenuto</li>
+        <li>Guarda online</li>
+        <li>Scarica contenuti</li>
+      </ul>
+    </td>
+    <td valign="top">
+      <ul>
+        <li>[ ] Supporto per serie TV</li>
+        <li>[ ] Automatizzazione aggiornamento dominio</li>
+        <li>[ ] Aggiornamento per la visione del contenuto: 
+           <ul>
+            <li>evitare di usare il player di streamingcommunity</li>
+            </ul>
+        </li>
+        <li>[ ] Applicazione Android & iOS</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
-## Features
-- cerca qualsiasi contenuto
-- guarda online
-- scarica contenuti
-> (supporto per le serie tv in arrivo)
 
 ## How to
 - scarica python
@@ -32,6 +54,7 @@ guarda o scarica contenuti da StreamingCommunity
 
 ## Demo
 https://github.com/Bbalduzz/stream-buddy/assets/81587335/9b73e8d0-833a-42ed-9853-75dcde5e5d7b
+
 
 
 
