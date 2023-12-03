@@ -1,5 +1,7 @@
+requests
 json
 inquirer
 webbrowser
 ffmpeg-python
 tqdm
+cryptography

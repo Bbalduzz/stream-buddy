@@ -41,6 +41,10 @@ class VideoDownloader():
         os.remove('file_list.txt')  # Cleanup
 
     def download_and_decrypt(self, input_url):
+
+        # Folder for decrypt ts file
+        os.makedirs("dec_temp_ts", exist_ok=True)
+
         response = requests.get(input_url)
         if response.status_code != 200: raise Exception(f"Failed to download {input_url}")
         output_filename = input_url.split('/')[-1]
