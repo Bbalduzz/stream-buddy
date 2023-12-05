@@ -23,7 +23,7 @@ guarda o scarica contenuti da StreamingCommunity
     </td>
     <td valign="top">
       <ul>
-        <li>[ ] Supporto per serie TV</li>
+        <li>[x] Supporto per serie TV</li>
         <li>[ ] Automatizzazione aggiornamento dominio</li>
         <li>[ ] Aggiornamento per la visione del contenuto: 
            <ul>
@@ -48,8 +48,11 @@ guarda o scarica contenuti da StreamingCommunity
 > [!WARNING]
 > assicurarsi che il dominio di streamingcommunity sia corretto ([bot ufficiale di streamingcommunity](https://t.me/BelloFigoIlRobot)).
 > Se così non fosse cambialo qui:
-> - `self.domain` = `<NUOVO_DOMINIO>`
-> - `api_response` = `requests.get(f"https://streamingcommunity.<NUOVO_DOMINIO>/api/search?q={self.query}").json()`
+> - `config.ini`: 
+> ```
+> [DOMAIN]
+> updated = <NUOVO_DOMINIO>
+> ```
 
 
 ## Demo

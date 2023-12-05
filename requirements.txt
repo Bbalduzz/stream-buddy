@@ -3,3 +3,5 @@ inquirer
 webbrowser
 ffmpeg-python
 tqdm
+requests
+configparser
