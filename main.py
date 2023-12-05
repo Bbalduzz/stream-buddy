@@ -106,13 +106,13 @@ class StreamingCommunityAPI:
 
 
 def main():
-    logo = '''
+    logo = f'''
    _____ __                            ____            __    __     
   / ___// /_________  ____ _____ ___  / __ )__  ______/ /___/ /_  __
   \__ \/ __/ ___/ _ \/ __ `/ __ `__ \/ __  / / / / __  / __  / / / /
  ___/ / /_/ /  /  __/ /_/ / / / / / / /_/ / /_/ / /_/ / /_/ / /_/ / 
-/____/\__/_/   \___/\__,_/_/ /_/ /_/_____/\__,_/\__,_/\__,_/\__, /  
-                                                           /____/
+/____/\__/_/   \___/\__,_/_/ /_/ /_/_____/\__,_/\__,_/\__,_/\__, / 
+.{get_domain_from_ini() + " "*(58-len(get_domain_from_ini()))}/____/ 
     '''
     def center(var:str, space:int=None): return '\n'.join(' ' * int(space or (os.get_terminal_size().columns - len(var.splitlines()[len(var.splitlines()) // 2])) / 2) + line for line in var.splitlines())
     print(center(logo))
@@ -144,11 +144,11 @@ def main():
     quality_index = ask.display_possible_qualities()
     action = ask.display_possible_actions()
     actions_map = {
-        (0,): lambda: perform_download(media, quality_index, sc),
-        (1,): lambda: open_web_page(sc),
-        (0, 1): lambda: download_and_open_web_page(media, quality_index, sc),
+        (0,): lambda: perform_download(media, quality_index),
+        (1,): lambda: open_web_page(),
+        (0, 1): lambda: download_and_open_web_page(media, quality_index),
     }
-    def perform_download(media, quality_index, sc):
+    def perform_download(media, quality_index):
         download_options = {
             "track": media["video_tracks"][quality_index],
             "subtitles": "",
@@ -159,12 +159,12 @@ def main():
         }
         VideoDownloader().download(download_options)
 
-    def open_web_page(sc):
+    def open_web_page():
         webbrowser.open(iframe_url)
 
-    def download_and_open_web_page(media, quality_index, sc):
-        open_web_page(sc)
-        perform_download(media, quality_index, sc)
+    def download_and_open_web_page(media, quality_index):
+        open_web_page()
+        perform_download(media, quality_index)
 
     actions_map.get(tuple(sorted(action)), lambda: None)()
 
