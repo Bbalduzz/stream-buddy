@@ -1,5 +1,5 @@
-import requests, json, inquirer, configparser, os, re, webbrowser, concurrent.futures
-from flask import Flask, render_template
+import requests, json, inquirer, configparser, os, re, webbrowser, concurrent.futures, signal
+from flask import Flask, render_template, request
 from src.display import Ask
 from src.downloader import VideoDownloader
 from src.m3u8_parser import M3U8PlaylistParser
@@ -163,36 +163,47 @@ def main():
     def open_web_page():
         def run_app():
             app = Flask(__name__)
+            @app.route('/shutdown', methods=['POST'])
+            def shutdown_flask_app():
+                return os.kill(os.getpid(), signal.SIGTERM)
             @app.route('/')
             def render_html():
                 html_content = f'''
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>M3U8 Player</title>
+                    <title>StreamBuddy player</title>
+                    <link rel="stylesheet" href="https://unpkg.com/plyr@3/dist/plyr.css"/>
                 </head>
                 <style>
-                    body {{
-                      overflow: hidden;
-                      height: 100vh;
-                      margin: 0;
-                      background-color: black;
+                    html, body {{
+                        margin: 0;
+                        padding: 0;
+                        height: 100%;
+                        background: #121212;
                     }}
-                    video {{
-                      overflow: hidden;
-                      height: 100%;
-                      width: 100%
+                    .container {{
+                        height: 100vh;
+                    }}
+                    .plyr {{
+                        border-radius: 4px;
+                        height: 100%;
                     }}
                 </style>
                 <body>
-                    <video id="video" width="100%" height="100%" controls></video>
+                    <div class="container">
+                        <video controls crossorigin playsinline></video>
+                    </div>
                     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-                    <script src="player.js"></script>
+                    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
                 </body>
                 <script>
                 document.addEventListener('DOMContentLoaded', function () {{
-                    var video = document.getElementById('video');
-                    var videoSrc = "{media["video_tracks"][quality_index]}";
+                    var video = document.querySelector('video');
+                    var videoSrc = '{media["video_tracks"][quality_index]}';
+                    
+                    // captions.update is required for captions to work with hls.js
+                    const player = new Plyr(video, {{title: "{title}", captions: {{update: true}}}});
 
                     if (Hls.isSupported()) {{
                         var hls = new Hls();
@@ -212,6 +223,10 @@ def main():
                     }}
                 }});
 
+                // to detect the closure of the player
+                window.onbeforeunload = function() {{
+                    navigator.sendBeacon('http://127.0.0.1:5000/shutdown');
+                }};
                 </script>
                 </html>
                 '''
