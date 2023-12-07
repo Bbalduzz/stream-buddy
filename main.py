@@ -1,4 +1,5 @@
-import requests, json, inquirer, configparser, os, re, webbrowser
+import requests, json, inquirer, configparser, os, re, webbrowser, concurrent.futures
+from flask import Flask, render_template
 from src.display import Ask
 from src.downloader import VideoDownloader
 from src.m3u8_parser import M3U8PlaylistParser
@@ -160,7 +161,68 @@ def main():
         VideoDownloader().download(download_options)
 
     def open_web_page():
-        webbrowser.open(iframe_url)
+        def run_app():
+            app = Flask(__name__)
+            @app.route('/')
+            def render_html():
+                html_content = f'''
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>M3U8 Player</title>
+                </head>
+                <style>
+                    body {{
+                      overflow: hidden;
+                      height: 100vh;
+                      margin: 0;
+                      background-color: black;
+                    }}
+                    video {{
+                      overflow: hidden;
+                      height: 100%;
+                      width: 100%
+                    }}
+                </style>
+                <body>
+                    <video id="video" width="100%" height="100%" controls></video>
+                    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+                    <script src="player.js"></script>
+                </body>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {{
+                    var video = document.getElementById('video');
+                    var videoSrc = "{media["video_tracks"][quality_index]}";
+
+                    if (Hls.isSupported()) {{
+                        var hls = new Hls();
+                        hls.loadSource(videoSrc);
+                        hls.attachMedia(video);
+                        hls.on(Hls.Events.MANIFEST_PARSED, function () {{
+                            video.play();
+                        }});
+                    }}
+                    // HLS.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
+                    // When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element through the `src` attribute.
+                    else if (video.canPlayType('application/vnd.apple.mpegurl')) {{
+                        video.src = videoSrc;
+                        video.addEventListener('loadedmetadata', function () {{
+                            video.play();
+                        }});
+                    }}
+                }});
+
+                </script>
+                </html>
+                '''
+                return html_content
+
+            app.run(threaded=True)
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_app)
+            webbrowser.open("http://127.0.0.1:5000")
+
 
     def download_and_open_web_page(media, quality_index):
         open_web_page()

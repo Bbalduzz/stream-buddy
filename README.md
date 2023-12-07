@@ -25,7 +25,7 @@ guarda o scarica contenuti da StreamingCommunity
       <ul>
         <li>[x] Supporto per serie TV</li>
         <li>[ ] Automatizzazione aggiornamento dominio</li>
-        <li>[ ] Aggiornamento per la visione del contenuto: 
+        <li>[x] Aggiornamento per la visione del contenuto: 
            <ul>
             <li>evitare di usare il player di streamingcommunity</li>
             </ul>

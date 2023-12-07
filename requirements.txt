@@ -5,3 +5,4 @@ ffmpeg-python
 tqdm
 requests
 configparser
+flask
