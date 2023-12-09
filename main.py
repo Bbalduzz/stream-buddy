@@ -31,7 +31,7 @@ class StreamingCommunityAPI:
     def __init__(self, solution_query):
         self.headers = {
             'X-Inertia': 'true', 
-            'X-Inertia-Version': '20f1d2bdf859760cb5ae6f10e6c94cd2'
+            'X-Inertia-Version': '29cf6ad533c0a019f0bdf4bbb8ae04e6'
         }
         self.domain = get_domain_from_ini()
         self.solution_query = solution_query
@@ -79,7 +79,9 @@ class StreamingCommunityAPI:
         response = requests.get(
             f'https://streamingcommunity.{self.domain}/watch/{self.solution_query.internal_id}',
             headers=self.headers,
-        ).json()
+        )
+        print(response.url)
+        response = response.json()
         # da qua possiamo prendere un sacco di infos sul film
         iframe_url = response["props"]["embedUrl"]
         return iframe_url
@@ -182,6 +184,19 @@ def main():
                         height: 100%;
                         background: #121212;
                     }}
+                    .overlay {{
+                        text-align: left;
+                        position: absolute;
+                        color:white;
+                        margin-left: 20px;
+                        opacity: 1; /* initially visible */
+                        transition: opacity 0.5s ease;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        z-index: 999;
+                        pointer-events: none;
+                    }}
                     .container {{
                         height: 100vh;
                     }}
@@ -191,6 +206,7 @@ def main():
                     }}
                 </style>
                 <body>
+                    <div class="overlay"><h1>{title}</h1></div>
                     <div class="container">
                         <video controls crossorigin playsinline></video>
                     </div>
@@ -201,9 +217,27 @@ def main():
                 document.addEventListener('DOMContentLoaded', function () {{
                     var video = document.querySelector('video');
                     var videoSrc = '{media["video_tracks"][quality_index]}';
+
+                    const controls = ['play-large', 'rewind', 'play', 'fast-forward', 'progress', 'current-time','duration', 'mute','volume','captions', 'settings', 'fullscreen'];
                     
                     // captions.update is required for captions to work with hls.js
-                    const player = new Plyr(video, {{title: "{title}", captions: {{update: true}}}});
+                    const player = new Plyr(video, {{controls, title: "{title}", captions: {{update: true}}}});
+                    var overlay = document.querySelector(".overlay")
+                    var timeout;
+                    function hideOverlay() {{overlay.style.opacity = '0';}}
+                    function resetOverlayTimeout() {{
+                        clearTimeout(timeout); // clear existing timeout
+                        overlay.style.opacity = '1'; // show overlay
+                        timeout = setTimeout(hideOverlay, 2000); // hide overlay after 2 seconds
+                    }}
+                    // Reset the overlay disappearance timeout on video events
+                    video.addEventListener('play', resetOverlayTimeout);
+                    video.addEventListener('pause', resetOverlayTimeout);
+                    video.addEventListener('seeked', resetOverlayTimeout);
+                    video.addEventListener('mouseenter', resetOverlayTimeout);
+                    video.addEventListener('mouseleave', function() {{
+                        timeout = setTimeout(hideOverlay, 300);
+                    }});
 
                     if (Hls.isSupported()) {{
                         var hls = new Hls();
@@ -232,11 +266,17 @@ def main():
                 '''
                 return html_content
 
-            app.run(threaded=True)
+            app.run(port=5001, host='0.0.0.0', threaded=True)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(run_app)
-            webbrowser.open("http://127.0.0.1:5000")
+            webbrowser.open("http://127.0.0.1:5001")
+            # se vuoi guardare il contenuto su un altro dispositivo assicurati che sia condivida la rete network con questo dispositivo
+            # poi copia nel motore di ricerca l'indirizzo IP pubblico della tua rete seguito da :5001
+            # LO VEDI ANCHE DALLA CONSOLE:
+            #  * Running on all addresses (0.0.0.0)
+            #  * Running on http://127.0.0.1:5001    <-- attuale
+            #  * Running on http://192.168.1.3:5001  <-- per accedere da un altro dispositivo
 
 
     def download_and_open_web_page(media, quality_index):

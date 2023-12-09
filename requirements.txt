@@ -1,6 +1,4 @@
-json
 inquirer
-webbrowser
 ffmpeg-python
 tqdm
 requests
