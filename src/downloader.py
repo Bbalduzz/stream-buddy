@@ -23,7 +23,6 @@ class VideoDownloader():
 
     def __init__(self):
         self.video_decoder: VideoDecoder
-        # self.parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
 
     def get_enc_key(self, internal_id):
         r = requests.get('https://vixcloud.co/storage/enc.key', headers={'Referer': f'https://vixcloud.co/embed/{internal_id}'})

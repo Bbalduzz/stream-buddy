@@ -29,11 +29,11 @@ class Search:
 
 class StreamingCommunityAPI:
     def __init__(self, solution_query):
+        self.domain = get_domain_from_ini()
         self.headers = {
             'X-Inertia': 'true', 
-            'X-Inertia-Version': '29cf6ad533c0a019f0bdf4bbb8ae04e6'
+            'X-Inertia-Version': json.loads(re.findall(r'data-page="([^"]+)"', requests.get(f"https://streamingcommunity.{self.domain}/").text)[0].replace("&quot;", '"'))["version"]
         }
-        self.domain = get_domain_from_ini()
         self.solution_query = solution_query
         self.content_type = 'tv' if hasattr(solution_query, 'seasons_count') else 'movie'
 
@@ -79,9 +79,7 @@ class StreamingCommunityAPI:
         response = requests.get(
             f'https://streamingcommunity.{self.domain}/watch/{self.solution_query.internal_id}',
             headers=self.headers,
-        )
-        print(response.url)
-        response = response.json()
+        ).json()
         # da qua possiamo prendere un sacco di infos sul film
         iframe_url = response["props"]["embedUrl"]
         return iframe_url

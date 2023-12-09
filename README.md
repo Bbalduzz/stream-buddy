@@ -17,7 +17,8 @@ guarda o scarica contenuti da StreamingCommunity
     <td valign="top">
       <ul>
         <li>Cerca qualsiasi contenuto</li>
-        <li>Guarda online</li>
+        <li>Guarda online senza pubblicità</li>
+        <li>Guarda i contenuti su più dispositivi in remoto</li>
         <li>Scarica contenuti</li>
       </ul>
     </td>
