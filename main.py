@@ -3,13 +3,9 @@ from flask import Flask, render_template, request
 from src.display import Ask
 from src.downloader import VideoDownloader
 from src.m3u8_parser import M3U8PlaylistParser
+from src.utils import get_domain_from_ini, versioning_control
 from models.medias import Movie, TVSerie, Season, Episode
 from models.tokens import Token
-
-def get_domain_from_ini(file_path='config.ini'):
-    config = configparser.ConfigParser()
-    config.read(file_path)
-    return config['DOMAIN']['updated']
 
 class Search:
     def __init__(self, query) -> None:
@@ -118,6 +114,8 @@ def main():
     def center(var:str, space:int=None): return '\n'.join(' ' * int(space or (os.get_terminal_size().columns - len(var.splitlines()[len(var.splitlines()) // 2])) / 2) + line for line in var.splitlines())
     print(center(logo))
 
+    versioning_control()
+
     ask = Ask()
     query = ask.search_query()
     search_instance = Search(query)
@@ -161,6 +159,7 @@ def main():
         VideoDownloader().download(download_options)
 
     def open_web_page():
+        # TODO: handle tracks with no audio
         def run_app():
             app = Flask(__name__)
             @app.route('/shutdown', methods=['POST'])
