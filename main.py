@@ -93,10 +93,9 @@ class StreamingCommunityAPI:
             exp = re.findall(r"'expires':\s*'([^']*)'", playlist_match_formatted)[0]
             return internal_id, Token(*params_clean_matches, exp)
 
-    @staticmethod
-    def get_media_contents(internal_id, tokens):
-        uri = f"https://vixcloud.co/playlist/{internal_id}?token={tokens.token}&token480p={tokens.token480p}&token720p={tokens.token720p}&expires={tokens.expire}&b=1"
-        parser = M3U8PlaylistParser(requests.get(uri).text)
+    def get_media_contents(self, internal_id, tokens):
+        self.master_uri = f"https://vixcloud.co/playlist/{internal_id}?token={tokens.token}&token480p={tokens.token480p}&token720p={tokens.token720p}&expires={tokens.expire}&b=1"
+        parser = M3U8PlaylistParser(requests.get(self.master_uri).text)
         parsed_data = parser()
         return parsed_data
 
@@ -159,7 +158,6 @@ def main():
         VideoDownloader().download(download_options)
 
     def open_web_page():
-        # TODO: handle tracks with no audio
         def run_app():
             app = Flask(__name__)
             @app.route('/shutdown', methods=['POST'])
@@ -168,7 +166,7 @@ def main():
             @app.route('/')
             def render_html():
                 html_content = f'''
-                <!DOCTYPE html>
+                                <!DOCTYPE html>
                 <html>
                 <head>
                     <title>StreamBuddy player</title>
@@ -180,6 +178,8 @@ def main():
                         padding: 0;
                         height: 100%;
                         background: #121212;
+                        font-family: sans-serif;
+                        font-weight: 300;
                     }}
                     .overlay {{
                         text-align: left;
@@ -213,7 +213,7 @@ def main():
                 <script>
                 document.addEventListener('DOMContentLoaded', function () {{
                     var video = document.querySelector('video');
-                    var videoSrc = '{media["video_tracks"][quality_index]}';
+                    var videoSrc = '{sc.master_uri}';
 
                     const controls = ['play-large', 'rewind', 'play', 'fast-forward', 'progress', 'current-time','duration', 'mute','volume','captions', 'settings', 'fullscreen'];
                     
