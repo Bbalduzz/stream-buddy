@@ -17,6 +17,7 @@ guarda o scarica contenuti da StreamingCommunity
     <td valign="top">
       <ul>
         <li>Cerca qualsiasi contenuto</li>
+        <li>Aggiornamento automatico del dominio</li>
         <li>Guarda online senza pubblicità</li>
         <li>Guarda i contenuti su più dispositivi in remoto</li>
         <li>Scarica contenuti</li>
@@ -25,13 +26,12 @@ guarda o scarica contenuti da StreamingCommunity
     <td valign="top">
       <ul>
         <li>[x] Supporto per serie TV</li>
-        <li>[ ] Automatizzazione aggiornamento dominio</li>
+        <li>[x] Automatizzazione aggiornamento dominio</li>
         <li>[x] Aggiornamento per la visione del contenuto: 
            <ul>
             <li>evitare di usare il player di streamingcommunity</li>
             </ul>
         </li>
-        <li>[ ] Applicazione Android & iOS</li>
       </ul>
     </td>
   </tr>
