@@ -57,7 +57,7 @@ guarda o scarica contenuti da StreamingCommunity
 
 
 ## Demo
-https://github.com/Bbalduzz/stream-buddy/assets/81587335/9b73e8d0-833a-42ed-9853-75dcde5e5d7b
+https://github.com/Bbalduzz/stream-buddy/assets/81587335/1a83436a-1b80-454a-be53-f1dfd8aa1023
 
 
 

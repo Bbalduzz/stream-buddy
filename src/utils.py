@@ -1,8 +1,9 @@
 import re, requests, configparser
 
-def update_domain():
-    r = requests.get("https://streamingcommunity.at", allow_redirects=False)
-    return r.headers['Location'].removeprefix("https://streamingcommunity.").removesuffix("/")
+def get_domain_from_ini(file_path='config.ini'):
+    config = configparser.ConfigParser()
+    config.read(file_path)
+    return config['DOMAIN']['updated']
 
 def versioning_control(file_path="config.ini"):
     config = configparser.ConfigParser()
