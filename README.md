@@ -46,16 +46,6 @@ guarda o scarica contenuti da StreamingCommunity
 - scarica le librerie necessarie
   - `pip install -r requirements.txt`
 
-> [!WARNING]
-> assicurarsi che il dominio di streamingcommunity sia corretto ([bot ufficiale di streamingcommunity](https://t.me/BelloFigoIlRobot)).
-> Se così non fosse cambialo qui:
-> - `config.ini`: 
-> ```
-> [DOMAIN]
-> updated = <NUOVO_DOMINIO>
-> ```
-
-
 ## Demo
 https://github.com/Bbalduzz/stream-buddy/assets/81587335/1a83436a-1b80-454a-be53-f1dfd8aa1023
 
