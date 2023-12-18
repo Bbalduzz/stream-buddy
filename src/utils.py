@@ -2,7 +2,7 @@ import re, requests, configparser
 
 def get_domain(file_path='config.ini'):
     try:
-        r = requests.get("https://streamingcommunity.at", allow_redirects=False, timeout=5):
+        r = requests.get("https://streamingcommunity.at", allow_redirects=False, timeout=3)
         return r.headers['Location'].removeprefix("https://streamingcommunity.").removesuffix("/")
     except requests.exceptions.ConnectionError:
         config = configparser.ConfigParser()

@@ -7,13 +7,15 @@ from src.utils import get_domain, versioning_control
 from models.medias import Movie, TVSerie, Season, Episode
 from models.tokens import Token
 
+DOMAIN = get_domain()
+
 class Search:
     def __init__(self, query) -> None:
         self.query = query
         self.result = []
 
     def search(self):
-        api_response = requests.get(f"https://streamingcommunity.{get_domain()}/api/search?q={self.query}").json()
+        api_response = requests.get(f"https://streamingcommunity.{DOMAIN}/api/search?q={self.query}").json()
         for data in api_response["data"]:
             match data["type"]:
                 case "tv":
@@ -25,7 +27,7 @@ class Search:
 
 class StreamingCommunityAPI:
     def __init__(self, solution_query):
-        self.domain = get_domain()
+        self.domain = DOMAIN
         self.headers = {
             'X-Inertia': 'true', 
             'X-Inertia-Version': json.loads(re.findall(r'data-page="([^"]+)"', requests.get(f"https://streamingcommunity.{self.domain}/").text)[0].replace("&quot;", '"'))["version"]
@@ -108,7 +110,7 @@ def main():
   \__ \/ __/ ___/ _ \/ __ `/ __ `__ \/ __  / / / / __  / __  / / / /
  ___/ / /_/ /  /  __/ /_/ / / / / / / /_/ / /_/ / /_/ / /_/ / /_/ / 
 /____/\__/_/   \___/\__,_/_/ /_/ /_/_____/\__,_/\__,_/\__,_/\__, / 
-.{get_domain() + " "*(58-len(get_domain()))}/____/ 
+.{DOMAIN + " "*(58-len(DOMAIN))}/____/ 
     '''
     def center(var:str, space:int=None): return '\n'.join(' ' * int(space or (os.get_terminal_size().columns - len(var.splitlines()[len(var.splitlines()) // 2])) / 2) + line for line in var.splitlines())
     print(center(logo))
@@ -138,9 +140,7 @@ def main():
 
     internal_id, tokens = sc.get_tokens_from_iframe(iframe_url)
     media = sc.get_media_contents(internal_id, tokens)
-
-    print(sc.master_uri)
-
+    
     quality_index = ask.display_possible_qualities()
     action = ask.display_possible_actions()
     actions_map = {
