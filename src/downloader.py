@@ -1,8 +1,10 @@
+import inspect
+from itertools import repeat
 import requests
-import os, re
+import os, re, shutil
 import ffmpeg
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
@@ -28,35 +30,66 @@ class VideoDownloader():
         r = requests.get('https://vixcloud.co/storage/enc.key', headers={'Referer': f'https://vixcloud.co/embed/{internal_id}'})
         return r.content
 
-    def merge_ts_to_mp4(self, ts_files, output_file):
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        with open(f'{current_dir}/file_list.txt', 'w') as f:
-            for ts_file in ts_files:
-                relative_path = os.path.join('..', ts_file)  # Adjust path to point to parent directory
-                f.write(f"file '{relative_path}'\n")
+    def create_file_list(self, input_folder, file_list_name='dec_temp_ts/filelist.txt'):
+        with open(file_list_name, 'w') as file:
+            for filename in sorted(os.listdir(input_folder)):
+                if filename.endswith('.ts'):
+                    # Use absolute paths to avoid confusion
+                    file_path = os.path.abspath(os.path.join(input_folder, filename))
+                    file.write(f"file '{file_path}'\n")
 
+
+    def merge_audio_video(self, video_folder, audio_folder, output_folder):
+        # Ensure output folder exists
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        # Get the list of video files
+        video_files = sorted(os.listdir(video_folder))
+        audio_files = sorted(os.listdir(audio_folder))
+
+        for video_file, audio_file in zip(video_files, audio_files):
+            video_path = os.path.join(video_folder, video_file)
+            audio_path = os.path.join(audio_folder, audio_file)
+            final_output = os.path.join(output_folder, video_file)  # Change the extension if needed
+
+            # Merge process
+            input_video = ffmpeg.input(video_path)
+            input_audio = ffmpeg.input(audio_path)
+            (
+                ffmpeg
+                .output(input_video, input_audio, final_output, vcodec='copy', acodec='copy')
+                .run(overwrite_output=True)
+            )
+
+            # Optionally delete the original files
+            os.remove(video_path)
+            os.remove(audio_path)
+
+    def concatenate_to_mp4(self, file_list, output_file):
         (
             ffmpeg
-            .input(f'{current_dir}/file_list.txt', format='concat', safe=0)
-            .output(output_file, c="copy")
+            .input(file_list, format='concat', safe=0)
+            .output(output_file, loglevel="quiet", codec='copy')
             .run()
         )
-        os.remove(f'{current_dir}/file_list.txt')
+        shutil.rmtree(f"{file_list.split('/')[0]}/output")
 
-    def download_and_decrypt(self, input_url):
+
+    def download_and_decrypt(self, input_url, type):
         response = requests.get(input_url)
         if response.status_code != 200: raise Exception(f"Failed to download {input_url}")
         output_filename = input_url.split('/')[-1]
         temp_filename = f"temp_{output_filename}"
         with open(temp_filename, 'wb') as temp_file:
             temp_file.write(response.content)
-        self.video_decoder.decrypt_ts_file(temp_filename, f"dec_temp_ts/{output_filename}")
+        self.decoder.decrypt_ts_file(temp_filename, f"dec_temp_ts/{type}/{output_filename}")
         os.remove(temp_filename)
-        return f"dec_temp_ts/{output_filename}"
+        return f"dec_temp_ts/{type}/{output_filename}"
 
     def simple_download(self, input_url):
         response = requests.get(input_url)
-        if response.status_code != 200: 
+        if response.status_code != 200:
             raise Exception(f"Failed to download {input_url}")
         output_filename = input_url.split('/')[-1]
         with open(f"dec_temp_ts/{output_filename}", 'wb') as file:
@@ -64,11 +97,38 @@ class VideoDownloader():
         return f"dec_temp_ts/{output_filename}"
 
     def download(self, options):
-        url = options["track"]
-        media_infos = options["track_infos"]
-        if options["subtitles"] != "": subtitles = options["subtitles"]
+        if not os.path.exists("dec_temp_ts"):
+            os.makedirs("dec_temp_ts/video")
+            os.makedirs("dec_temp_ts/audio")
+            os.makedirs("dec_temp_ts/output")
+        video_ts_files, audio_ts_files = [], []
 
-        m3u8_content = requests.get(url).text
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_to_segment = {
+                executor.submit(self.process_segment, options["track"], options["track_infos"], "video"): "video",
+                executor.submit(self.process_segment, options["audio"], options["track_infos"], "audio"): "audio",
+            }
+
+            for future in as_completed(future_to_segment):
+                segment_type = future_to_segment[future]
+                ts_files = future.result()  # Retrieve the actual result from the future here
+                if segment_type == "video":
+                    video_ts_files = ts_files
+                elif segment_type == "audio":
+                    audio_ts_files = ts_files
+
+        # File names
+        base_filename = f'{options["track_infos"]["title"].replace(" ", "_").replace(":", "")}'
+        final_output = f"{base_filename}.mp4"
+
+        # Merge section: vidio ts + audio ts -> ts -> merge ts -> mp4
+        self.merge_audio_video('dec_temp_ts/video', 'dec_temp_ts/audio', 'dec_temp_ts/output')
+        self.create_file_list('dec_temp_ts/output')
+        self.concatenate_to_mp4('dec_temp_ts/filelist.txt', final_output)
+        shutil.rmtree("dec_temp_ts")
+
+    def process_segment(self, m3u8_url, media_infos, segment_type):
+        m3u8_content = requests.get(m3u8_url).text
         is_encrypted = "#EXT-X-KEY" in m3u8_content
 
         if is_encrypted:
@@ -78,16 +138,25 @@ class VideoDownloader():
             if enc_method == "AES-128":
                 key = self.get_enc_key(media_infos["id"])
                 iv = bytes.fromhex(raw_iv.replace("0x", ""))
-                self.video_decoder = VideoDecoder(key, iv)
+                self.decoder = VideoDecoder(key, iv)
 
         urls = [line for line in m3u8_content.split('\n') if line.startswith("http://") or line.startswith("https://")]
-
         with ThreadPoolExecutor(max_workers=30) as executor:
+            futures = []
             if is_encrypted:
-                ts_files = list(tqdm(executor.map(self.download_and_decrypt, urls), total=len(urls)))
+                futures.extend([executor.submit(self.download_and_decrypt, url, segment_type) for url in urls])
             else:
-                ts_files = list(tqdm(executor.map(self.simple_download, urls), total=len(urls)))
+                futures.extend([executor.submit(self.simple_download, url, segment_type) for url in urls])
+            progress = tqdm(total=len(futures), unit="bytes", unit_scale=True, desc=f'Downloading {segment_type}')
 
-        self.merge_ts_to_mp4(ts_files, f'{media_infos["title"].replace(" ", "_").replace(":", "")}.mp4')
+            ts_files = []
+            for future in as_completed(futures):
+                progress.update(1)
+                try:
+                    result = future.result()
+                    ts_files.append(result)
+                except Exception as e:
+                    print(f"A task in the thread pool raised an exception: {e}")
+            progress.close()
 
-        for file in ts_files: os.remove(file)
+        return ts_files

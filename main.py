@@ -1,5 +1,6 @@
-import requests, json, inquirer, configparser, os, re, webbrowser, concurrent.futures, signal
-from flask import Flask, render_template, request
+import requests, json, os, re, webbrowser, concurrent.futures, signal
+from flask import Flask
+import m3u8_To_MP4
 from src.display import Ask
 from src.downloader import VideoDownloader
 from src.m3u8_parser import M3U8PlaylistParser
@@ -149,8 +150,12 @@ def main():
         (0, 1): lambda: download_and_open_web_page(media, quality_index),
     }
     def perform_download(media, quality_index):
+        # m3u8_To_MP4.multithread_download(media["video_tracks"][quality_index])
+        track = media["video_tracks"][quality_index]
+        m3u8 = requests.get(track).text
         download_options = {
             "track": media["video_tracks"][quality_index],
+            "audio": media["audio_tracks"][0][1],
             "subtitles": "",
             "track_infos": {
                 "id": internal_id,
